@@ -1,0 +1,211 @@
+[
+  {
+    "id": "leave-prorating",
+    "question": "I joined in July. How much sick leave do I receive that year?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-leave-001::section-01",
+      "hr-leave-001::section-02"
+    ],
+    "expected_answer": "For an eligible full-time employee, 8 × 6 ÷ 12 = 4 working days."
+  },
+  {
+    "id": "bereavement-unknown",
+    "question": "How many days of bereavement leave do I receive?",
+    "answerable": false,
+    "expected_chunk_ids": [
+      "hr-leave-001::section-07"
+    ],
+    "expected_answer": "The policy does not define bereavement leave. Refer to HR without inventing an allowance."
+  },
+  {
+    "id": "mfa-recovery",
+    "question": "I lost my phone and have no MFA recovery codes. What should I do?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-mfa-001::section-05"
+    ],
+    "expected_answer": "Contact helpdesk@novatech.example. IT must verify identity through its approved recovery process. SmartDesk cannot bypass MFA or identity verification."
+  },
+  {
+    "id": "wfh-approval",
+    "question": "Can I work from home three days every week without approval?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-wfh-001::section-04"
+    ],
+    "expected_answer": "No. More than two remote days per week requires approval from both the reporting manager and HR."
+  },
+  {
+    "id": "reimbursement-payment",
+    "question": "When will my approved reimbursement be paid?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-expenses-001::section-05"
+    ],
+    "expected_answer": "Within 10 working days after final Finance approval, separately from salary. Waiting for missing information is excluded."
+  },
+  {
+    "id": "monitor-replacement-unknown",
+    "question": "My monitor has been flickering. How do I get a replacement?",
+    "answerable": false,
+    "expected_chunk_ids": [
+      "onboarding-equipment-001::section-08"
+    ],
+    "expected_answer": "Monitor troubleshooting and replacement eligibility are not defined. Refer to IT and offer escalation without promising replacement."
+  },
+  {
+    "id": "reimbursement-manager-only",
+    "question": "My manager approved my expense. Does that mean payment arrives within 10 working days?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-expenses-001::section-05"
+    ],
+    "expected_answer": "Manager approval alone does not start the payment timeline. Payment is within 10 working days after final Finance approval, excluding time waiting for missing information."
+  },
+  {
+    "id": "vpn-personal-device",
+    "question": "Can I use my personal laptop to connect to the company VPN?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-vpn-001::section-01"
+    ],
+    "expected_answer": "No. The VPN guide supports company-managed laptops and explicitly excludes personal devices."
+  },
+  {
+    "id": "internet-reimbursement-approval",
+    "question": "I have an approved remote-work schedule. Is my internet bill automatically reimbursed?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-expenses-001::section-02",
+      "hr-expenses-001::section-03"
+    ],
+    "expected_answer": "No. An approved remote-work arrangement and manager approval for reimbursement are both required. Reimbursement is limited to the actual expense, up to $40 per calendar month."
+  },
+  {
+    "id": "guest-wifi-renewal",
+    "question": "Does visitor Wi-Fi renew automatically for the next day?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-guest-wifi-001::section-03"
+    ],
+    "expected_answer": "No. Access expires at the end of the approved visit date. The host must request an extension for another day."
+  },
+  {
+    "id": "mobile-email-personal-phone",
+    "question": "Does using an authenticator app authorize email on my personal phone?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-mobile-email-001::section-01"
+    ],
+    "expected_answer": "No. Using an authenticator app does not itself authorize mobile email access. This guide covers company-managed phones enrolled by IT and does not authorize email on personal phones."
+  },
+  {
+    "id": "phishing-credentials-entered",
+    "question": "I entered my password through a suspicious email link. What now?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-phishing-001::section-03"
+    ],
+    "expected_answer": "Contact IT immediately and explain which action occurred and when. Use the Password Reset Guide if IT directs you to reset the password. Do not assume a password reset alone resolves a possible compromise."
+  },
+  {
+    "id": "printer-ip-change",
+    "question": "Can I change the printer IP address to fix disconnections?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-printer-001::section-04"
+    ],
+    "expected_answer": "No. Record whether one device or several colleagues are affected and whether the printer previously worked, then contact IT. Employees must not change printer IP addresses, install unapproved drivers, or alter network settings."
+  },
+  {
+    "id": "device-update-deadline",
+    "question": "Can I ignore an update restart deadline because I am busy?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "it-device-updates-001::section-02"
+    ],
+    "expected_answer": "No. Follow the displayed update deadline. If it conflicts with essential work, contact helpdesk@novatech.example before the deadline with the asset ID, displayed deadline, and business reason. An extension requires IT approval."
+  },
+  {
+    "id": "conflict-disclosure-approval",
+    "question": "Does disclosing a conflict of interest approve the activity?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-conduct-001::section-03"
+    ],
+    "expected_answer": "No. Disclose the potential personal or financial conflict to compliance@novatech.example before participating in the affected work decision and request guidance. Disclosure does not itself approve the activity."
+  },
+  {
+    "id": "harassment-manager-permission",
+    "question": "Do I need manager permission to raise a harassment concern?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-anti-harassment-001::section-02"
+    ],
+    "expected_answer": "No. Employees do not need manager permission to raise a good-faith concern. Contact HR; use Compliance if the normal HR contact is involved or the concern requires Compliance guidance."
+  },
+  {
+    "id": "performance-review-pay-rise",
+    "question": "Does completing my annual review guarantee a pay rise?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "hr-performance-001::section-05"
+    ],
+    "expected_answer": "No. Completing a performance review does not automatically create entitlement to a pay rise, promotion, bonus, or stock grant."
+  },
+  {
+    "id": "benefits-probation-eligibility",
+    "question": "Can full-time employees on probation submit benefits choices?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "onboarding-benefits-001::section-01"
+    ],
+    "expected_answer": "Yes. Full-time employees, including those on probation, may submit benefits enrollment choices within 30 calendar days of their employment start date. HR confirms available plans; the enrollment window does not establish coverage dates or entitlement to a particular plan."
+  },
+  {
+    "id": "buddy-leave-approval",
+    "question": "Can my buddy approve my leave?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "onboarding-buddy-001::section-04"
+    ],
+    "expected_answer": "No. A buddy cannot approve leave. Follow the relevant leave policy and approval process."
+  },
+  {
+    "id": "probation-automatic-confirmation",
+    "question": "Am I automatically confirmed after day 90?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "onboarding-probation-001::section-04"
+    ],
+    "expected_answer": "No. Reaching day 90 does not automatically confirm employment. HR communicates the outcome in writing after the review and required approvals; any extension or different arrangement requires written HR confirmation."
+  },
+  {
+    "id": "tax-universal-deadline-unknown",
+    "question": "What is the universal annual tax-declaration deadline?",
+    "answerable": false,
+    "expected_chunk_ids": [
+      "payroll-tax-001::section-03"
+    ],
+    "expected_answer": "The guide does not define a universal annual cutoff. Use the submission deadline displayed in the portal for the declaration period; if it is missing or has passed, contact payroll@novatech.example without inventing a date."
+  },
+  {
+    "id": "salary-separate-reimbursements",
+    "question": "Are reimbursements paid with salary?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "payroll-salary-001::section-03"
+    ],
+    "expected_answer": "No. Approved reimbursements are paid separately from salary under the Reimbursement Policy. They should not be assumed to arrive with the monthly salary payment."
+  },
+  {
+    "id": "stock-personal-vesting-unknown",
+    "question": "What is my stock option vesting schedule?",
+    "answerable": false,
+    "expected_chunk_ids": [
+      "payroll-stock-001::section-05"
+    ],
+    "expected_answer": "The guide does not provide a vesting schedule or access to personal grant records. Review the individual grant notice and plan documents and ask the designated plan contact; Payroll can direct the request. Do not invent a standard schedule or vested balance."
+  }
+]

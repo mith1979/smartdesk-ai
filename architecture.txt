@@ -1,0 +1,521 @@
+SMARTDESK AI — IMPLEMENTED ARCHITECTURE
+
+Updated: November 5, 2026.
+Evidence: the supplied project documentation, reviewed code excerpts, and
+NUC execution/evaluation outputs shared in this conversation. The NUC was
+not accessed directly for this documentation update.
+
+Project location:
+~/projects/python/fde_program/notebooks/week_11/smartdesk_capstone
+
+Rendered block diagrams are in README.md, under Architecture. This text
+file provides the detailed explanation and inventory.
+
+1. IMPLEMENTED COMPONENTS
+
+The application currently runs from scripts/. LangGraph and real GitHub
+ticket operations are implemented, not planned work.
+
+Primary entry points:
+  scripts/smartdesk_chat.py   Conversational LangGraph CLI
+  scripts/rag.py              Single-turn RAG inspection CLI and shared functions
+  scripts/evaluate_rag.py     Dense/hybrid development evaluation
+  tests/test_workflow.py      Offline graph/API/storage checks
+
+Preparation and inspection:
+  inspect_hr.py, explore_hr.py, list_hr_questions.py,
+  select_hr_candidates.py     HR download, exploration and source selection
+  inspect_it.py, explore_it.py IT download and exploration
+  inspect_kb.py               Frontmatter/body parsing and KB inspection
+  promote_kb_expansion.py     Review-first promotion of 14 expansion drafts
+  build_chunks.py            Markdown section chunk generation
+  inspect_chunks.py          Chunk inspection
+  load_documents.py          Chunk JSONL to LangChain Documents
+  build_index.py             Embedding and persistent Chroma indexing
+
+Retrieval inspection:
+  search_kb.py                Dense results and distances
+  compare_metrics.py          Vector distance/cosine exploration
+  bm25_search.py              Sparse retrieval over indexed passages
+  hybrid_search.py            Candidate retrieval and RRF fusion
+
+Ticket integration:
+  verify_github.py            Read-only repository/credential verification
+  test_create_ticket.py       Explicitly confirmed real demonstration write
+  check_ticket.py             Live issue and comment reads
+  ticket_store.py             Persistent employee-email associations
+  tickets.py                  Reusable creation/status operations and CLI
+
+Root documentation/configuration:
+  README.md, architecture.txt, requirements.txt, .env.example, .gitignore
+
+The proposed src/smartdesk/ package and ingest_kb.py wrapper do not exist
+as a second implemented pipeline. Refactoring is optional after delivery.
+
+2. DATASET SOURCES AND FINAL KNOWLEDGE BASE
+
+Original snapshots:
+  strova-ai/hr-policies-qa-dataset
+    data/raw/hr_train.jsonl: 644 conversational HR Q&A records.
+    data/raw/hr_candidates.json: 11 selected candidate records.
+
+  Console-AI/IT-helpdesk-synthetic-tickets
+    data/raw/it_train.jsonl: 500 tickets with subjects, descriptions,
+    categories, priorities and related fields. No resolution field.
+
+Raw data preserves source material for traceability and future review.
+Downloaded tickets do not become verified troubleshooting solutions.
+All fictional NovaTech rules are demonstration content.
+
+Final reviewed KB: 30 documents, producing 179 section chunks.
+  HR: 10 documents.
+  IT: 11 documents.
+  Onboarding: 5 documents.
+  Payroll: 4 documents.
+
+Content origin:
+  4 adapted HR dataset documents.
+  26 synthetic documents, including 2 IT guides inspired by ticket topics.
+  The expansion added 14 synthetic documents and 70 sections to the
+  preceding 16-document, 109-section KB.
+
+Full inventory, relative to data/kb/:
+
+HR
+  hr/leave_policy.md                Synthetic
+  hr/work_from_home.md              Synthetic
+  hr/reimbursement.md               Synthetic
+  hr/policy_updates.md              Adapted HR records 1,2,5,251
+  hr/compliance_contacts.md         Adapted HR records 8,9,229,433
+  hr/reporting_concerns.md          Adapted HR record 282
+  hr/confidentiality.md             Adapted HR record 605
+  hr/code_of_conduct.md             Synthetic expansion
+  hr/anti_harassment.md             Synthetic expansion
+  hr/performance_reviews.md         Synthetic expansion
+
+IT
+  it/password_reset.md              Synthetic
+  it/mfa_setup.md                   Synthetic
+  it/vpn_setup.md                   Synthetic
+  it/software_requests.md           Synthetic
+  it/application_access.md          Synthetic, ticket-inspired
+  it/shared_drive_access.md         Synthetic, ticket-inspired
+  it/guest_wifi.md                  Synthetic expansion
+  it/mobile_email.md                Synthetic expansion
+  it/phishing_reporting.md          Synthetic expansion
+  it/printer_setup.md               Synthetic expansion
+  it/device_updates.md              Synthetic expansion
+
+Onboarding
+  onboarding/first_day_checklist.md Synthetic
+  onboarding/equipment_allocation.md Synthetic
+  onboarding/benefits_enrollment.md Synthetic expansion
+  onboarding/buddy_programme.md     Synthetic expansion
+  onboarding/probation.md           Synthetic expansion
+
+Payroll
+  payroll/payday_and_payslips.md     Synthetic
+  payroll/tax_declarations.md       Synthetic expansion
+  payroll/salary_structure.md       Synthetic expansion
+  payroll/stock_options_overview.md Synthetic expansion
+
+HR record numbers refer to the selected local source snapshot. Available
+source and inspiration metadata preserves that relationship. Synthetic
+IT instructions were not supplied as confirmed fixes by the ticket data.
+
+Expansion drafts live in data/raw/synthetic/kb_expansion/. The NUC has
+already promoted them to reviewed data/kb/ documents. Promotion is not a
+normal ingestion prerequisite after a fresh checkout containing the KB.
+
+Deliberate knowledge gaps remain:
+  - Monitor troubleshooting, repair procedures and replacement eligibility.
+  - Bereavement leave allowance.
+  - A universal annual tax-declaration deadline.
+  - Individual stock-option vesting schedules and personal records.
+
+These gaps support evaluation of honest insufficiency and escalation.
+Documented prohibitions, such as personal-device VPN restrictions, are
+supported answers rather than missing knowledge.
+
+3. PREPARATION, CHUNKING AND INDEXING
+
+Input: reviewed Markdown under data/kb/.
+
+A. inspect_kb.py reads flat frontmatter metadata and document bodies.
+   Review status is checked before chunking.
+
+B. build_chunks.py splits the body at level-two Markdown headings (##).
+   Each section receives the document introduction, section heading and
+   section content. Empty sections and duplicate chunk IDs are rejected.
+   Output: data/processed/chunks.jsonl, currently 179 records.
+
+   This is Markdown structure-aware section splitting. There is no
+   recursive, fixed-size or embedding-based semantic splitting stage.
+   Section sizes were chosen through document preparation; large future
+   sections would need a measured secondary splitting strategy.
+
+C. load_documents.py converts each record into a LangChain Document.
+   page_content contains passage text. Metadata contains identification,
+   source, domain, topic, version and provenance fields.
+
+D. build_index.py creates passage embeddings and adds Documents to Chroma
+   using stable chunk IDs.
+   Model: text-embedding-3-small.
+   Collection: smartdesk_sections_openai_small_v1.
+   Persistence: storage/chroma/.
+   Latest reported indexed entries: 179.
+
+Runtime retrieval reads the resulting indexed passages. It does not also
+ingest Markdown and JSONL as separate duplicate copies.
+
+Run after reviewed KB changes:
+  python scripts/inspect_kb.py
+  python scripts/build_chunks.py
+  python scripts/inspect_chunks.py
+  python scripts/load_documents.py
+  python scripts/build_index.py
+
+Indexing incurs embedding API usage. Reusing IDs supports upserts but does
+not remove old IDs after source deletion or section renumbering. Reconcile
+stale IDs before evaluation. Keep Chroma lifecycle separate from the
+SQLite ticket database; never treat all storage/ as disposable.
+
+4. METADATA
+
+Frontmatter provides document-level fields. Chunk generation adds:
+  chunk_id, document_id, title, section, domain, topic, version,
+  source_type, source_dataset, source_records, inspiration_dataset,
+  inspiration_ticket_ids, source.
+
+Example:
+  chunk_id: hr-leave-001::section-01
+  document_id: hr-leave-001
+  source: data/kb/hr/leave_policy.md
+  domain: HR
+  source_type: synthetic
+
+Chunk IDs identify exact passages for deduplication, evaluation and source
+display. Metadata also supports provenance and potential explicit filters;
+the presence of a domain field does not imply automatic domain filtering.
+
+review_status gates preparation; it is not necessarily stored as chunk
+metadata. The prompt explicitly receives chunk IDs, source paths and text.
+Other stored metadata is not automatically supplied to the model.
+
+Section numbers are positional. Inserting or rearranging headings can
+change chunk IDs and requires reviewing evaluation expectations and stale
+index entries. Do not renumber sections to make an evaluation pass.
+
+5. RETRIEVAL AND SINGLE-TURN RAG
+
+Entry point:
+  python scripts/rag.py "employee question" --retrieval hybrid --k 4
+
+main() validates arguments and loads configuration, then selects retrieval.
+
+Dense retrieval:
+  retrieve(question, k) opens the existing Chroma collection with
+  OpenAIEmbeddings. similarity_search() embeds the question through that
+  embedding function and searches stored passage vectors. The chat model
+  does not generate embeddings. Final output is a list of Documents.
+
+BM25 retrieval:
+  build_bm25() reads document text and metadata from the same collection
+  without embedding calls. Complete rows are sorted by stored ID to keep
+  text, metadata and tokens aligned. Both corpus and question use lowercase
+  alphanumeric tokenization. search_bm25() ranks matching passages by score
+  and resolves score ties using chunk ID. No stemming or synonym expansion
+  is implemented. Scores are ranking values, not probabilities.
+
+Hybrid retrieval:
+  retrieve_hybrid() fetches up to max(10, k) candidates per method in the
+  RAG integration. For each chunk, RRF sums 1 / (60 + rank) across the
+  rankings where that chunk occurs. A chunk counts once per method.
+  Results sort by descending RRF, with chunk ID breaking exact ties.
+  The final k entries are converted back to Documents for generation.
+
+  Raw BM25 scores and vector distances are not added together. RRF is rank
+  fusion, not a semantic reranker. BM25 is currently rebuilt in memory
+  during each hybrid request, which adds overhead.
+
+Generation:
+  generate_answer() formats each Document as an exact chunk ID, source path
+  and passage text. It combines evidence with the employee question and
+  shared SYSTEM_PROMPT through ChatPromptTemplate.
+
+  The prompt asks whether evidence establishes the original requested
+  facts/procedure/contact, rather than merely supporting a helpful referral.
+  It permits documented negative answers, combines necessary passages,
+  preserves conditions, and prohibits invented policies and personal data.
+
+  A fresh RagAnswer JSON schema is built for each request. Its source_ids
+  array items are restricted by an enum of retrieved chunk IDs. The model
+  is called through with_structured_output(schema, method="json_schema",
+  strict=True). The dictionary response is converted to RagAnswer using
+  model_validate(). Default chat model: gpt-4o-mini, unless overridden by
+  OPENAI_CHAT_MODEL.
+
+  RagAnswer fields: answer, source_ids, evidence_status.
+  answerable is a Python property: evidence_status == "supported".
+  The property translates the label; the model still chooses that label.
+
+Validation:
+  Reject unknown citation IDs and supported responses without citations.
+  The CLI/graph also check that answer text is nonempty. Caller-level
+  handling should continue rejecting invalid responses rather than silently
+  assigning replacement citations. A schema enum prevents out-of-set IDs
+  but does not establish that a chosen passage supports the answer.
+
+Output:
+  Supported evidence: answer and source details.
+  Insufficient evidence: explain missing information and documented route
+  to support. The standalone CLI does not create tickets; the integrated
+  conversation handles escalation and approval.
+  Operational errors are not evidence that the requested policy is absent.
+
+6. LANGGRAPH CONVERSATION AND STATE
+
+Entry point:
+  python scripts/smartdesk_chat.py --retrieval hybrid --debug
+
+State includes messages, intent, retrieval question, employee email,
+draft fields, escalation/approval flags and ticket selection data.
+The message reducer accumulates conversation messages. Routing uses recent
+conversation context; the reviewed router supplies up to the last 16
+messages to the model, not an unlimited history window.
+
+route node:
+  Classifies kb, create, status, chat or clarify. A self-contained KB
+  question is preserved verbatim. For a contextual follow-up, the retrieval
+  input retains the original text plus the router's resolution so dates
+  and conditions are not silently discarded.
+
+  A routing guard sends operational questions through KB lookup when a
+  create classification has no explicit ticket/support-request wording.
+  Another guard handles a resolved KB follow-up incorrectly marked clarify
+  without a clarification question. These are practical guards, not proof
+  of complete intent-classification accuracy.
+
+  Router failure reports an operational issue, clears write approval and
+  retains existing known session information instead of inventing a route.
+
+answer_kb node:
+  Runs shared retrieval and generate_answer(). A supported answer ends the
+  turn. Insufficient evidence or empty retrieval routes to offer_ticket.
+  Retrieval/generation exceptions report operational failure; they must not
+  be presented as proof of missing policy information.
+
+offer_ticket node:
+  Uses interrupt() to ask whether to prepare a draft. Declining ends the
+  turn without writing. Agreement permits preparation only; it is not final
+  approval to create an issue.
+
+collect_email node:
+  Reuses a supplied session email or interrupts for it. Normalizes/validates
+  the email. A supported cancellation ends the operation. Status requests
+  continue to load_status; creation/escalation continues to approve_ticket.
+
+approve_ticket node:
+  Presents email, summary, description and category. EDIT validates the
+  revised draft, clears approval and returns to a new preview. CREATE is
+  translated by the CLI into approval. Other approval input cancels.
+  No issue write occurs before this human-input pause.
+
+submit_ticket node:
+  Requires the approval flag and calls create_ticket(..., confirmed=True).
+  Returns the actual GitHub number, URL and initial state, including any
+  mapping warning. Clears approval after the operation. Failures must not
+  claim ticket creation succeeded.
+
+load_status / select_ticket / show_status nodes:
+  Use the email association to retrieve live ticket details and comments.
+  With no matches, clearly state no locally associated tickets were found.
+  With one result, display it. With multiple results, interrupt for selection
+  from the displayed list, then show that result. The current implementation
+  fetches all associated details/comments before selection. A failed lookup
+  or partial read is reported explicitly, not converted to a no-ticket claim.
+
+Persistence and human input:
+  The graph is compiled with InMemorySaver. A UUID thread_id identifies the
+  conversation. Command(resume=...) resumes interrupts on that same thread.
+  /new creates a fresh thread and clears remembered email/context; /quit
+  ends process memory. Conversation state is not durable across restarts.
+
+  SQLite associations persist separately. A new process must ask for email
+  again but can locate previously associated tickets after it is supplied.
+
+7. EXTERNAL TOOLS, WRITES AND STORAGE
+
+Ticket repository: mith1979/smartdesk-tickets.
+API integration: direct GitHub REST calls through the ticket helper modules;
+an MCP server is not required by this implementation.
+
+Creation fields: employee email, summary, description and category. Category
+is stored in the issue body, not a GitHub label. Draft validation and explicit
+confirmation precede the POST. SmartDesk does not approve replacement,
+grant access, reset accounts or promise a resolution merely by opening an issue.
+
+ticket_store.py keeps repository, issue number and normalized employee
+email in storage/tickets.sqlite3. Duplicate links for the same employee do
+not create duplicate associations; silent reassignment is rejected.
+This is an association database, not a ticket-state cache or identity system.
+
+Current state and comments are fetched from GitHub. Open and closed are
+reported as returned; an in-progress stage must not be invented. A ticket
+without an email mapping is outside the current email lookup results.
+
+Failure boundaries:
+  - HTTP creation failure must not save a successful ticket association.
+  - Write timeout has an uncertain outcome; do not automatically repeat it.
+  - If creation succeeds and local mapping fails, preserve the real issue
+    reference and warn the user; repair the association, do not create again.
+  - A comment-fetch failure may leave valid live state available; report the
+    partial failure. One ticket's failure must not hide other results.
+
+Approval is an application gate, not a claim of durable exactly-once writes
+across crashes. No production idempotency mechanism is claimed.
+
+8. WORKED EXAMPLES AND TESTED LIVE FLOWS
+
+July sick leave:
+  Eligibility/prorating section plus annual allowance section.
+  Annual sick leave is 8 working days. July counts as a full joining month.
+  8 x 6 / 12 = 4 days. Supported; cite both required passages.
+
+September follow-up:
+  Resolve the earlier sick-leave topic while preserving September.
+  8 x 4 / 12 = approximately 2.67; round upward to the next half-day = 3.
+
+Personal laptop for VPN:
+  Company-managed devices only. The documented answer is no.
+  evidence_status=supported, answerable=True.
+
+Monitor replacement:
+  Procedure and eligibility remain undefined. A contact route does not
+  establish a replacement procedure. evidence_status=insufficient.
+  Offer a ticket; gather details; preview; create only after CREATE.
+
+Tax-declaration deadline:
+  The guide does not define a universal cutoff; use the period-specific
+  portal deadline or contact Payroll. Do not claim that no deadline exists.
+  A request for a universal date is insufficient under the evaluation policy.
+
+Reimbursement approval:
+  Manager approval alone does not start the payment clock. The documented
+  10-working-day timeline starts after final Finance approval and excludes
+  waiting for missing information. A misleading initial yes can pass current
+  ID/answerability metrics, so manual factual review remains necessary.
+
+Manual terminal demonstrations already reported:
+  - Password-reset guidance with a cited KB passage.
+  - Monitor escalation with preview and explicit confirmation, producing a
+    real issue number/link (#3 in the shared demonstration).
+  - After CLI restart, supplied email located that issue. A later GitHub
+    comment appeared on the next status request, demonstrating a live read.
+  - Draft edits/cancellation, multiple-ticket selection, follow-ups and
+    session reset were also exercised in shared terminal examples.
+
+Formal video or annotated-screenshot packaging remains pending.
+
+9. EVALUATION RESULTS AND INTERPRETATION
+
+RAG input: data/evaluation/rag_cases.json, 23 development cases.
+The original 9 cases are preserved; 14 cover the KB expansion.
+
+Commands:
+  python scripts/evaluate_rag.py --retrieval dense --k 4
+  python scripts/evaluate_rag.py --retrieval hybrid --k 4
+
+Reports:
+  data/evaluation/dense_results.json
+  data/evaluation/hybrid_results.json
+
+Latest reported run, November 5, 2026:
+  Dense:  completed 23/23; all expected evidence 22/23;
+          answerability 23/23; citation IDs 23/23.
+  Hybrid: completed 23/23; all expected evidence 23/23;
+          answerability 23/23; citation IDs 23/23.
+
+Dense missed payroll-tax-001::section-03 for the universal deadline case
+but still gave the expected insufficient-evidence classification.
+
+Required-evidence coverage is intersection(expected IDs, retrieved IDs)
+divided by the number of expected IDs. Summary evidence passes count cases
+at 100%. Expected IDs identify designated required evidence rather than
+exhaustive relevance judgments for every passage in the corpus.
+
+Answerability measures Boolean agreement, not factual correctness.
+Citation validity measures retrieved-ID membership and required presence,
+not semantic entailment. expected_answer is stored for manual comparison,
+not automatically graded. Evaluation calls RAG directly and does not test
+the conversational router or external ticket flow.
+
+Offline suite:
+  python tests/test_workflow.py
+  Latest reported: 22 tests passed.
+  Report: data/evaluation/workflow_results.json.
+
+These tests mock model/API behavior and cover workflow, approvals, edits,
+cancellation, resolved follow-ups, session isolation, validation, failure
+paths and storage. They do not establish live model reliability.
+
+Earlier runs exhibited citation inventions, evidence-status contradictions
+and retrieval differences. The citation schema now restricts returned IDs;
+the consolidated prompt clarifies request-level sufficiency. The latest
+hybrid run passed, but unexplained earlier retrieval differences have not
+been proven fixed. Do not infer repeatability or a general hybrid advantage
+from this small development set. Preserve reports and investigate failures
+without weakening expected outcomes or repeatedly running for a perfect score.
+
+10. CONFIGURATION, DELIVERY AND REMAINING WORK
+
+Configuration precedence: process environment, project .env, then shared
+FDE .env, with override=False. Blank earlier values can mask later values.
+Keep credentials and the private ticket mapping out of Git and recordings.
+
+Path limitation: current PROJECT_DIR/FDE_DIR ancestor calculations assume
+the course layout. A shallow path can fail during import, before a project
+.env is read. Portable checkout behavior has not been verified. Review those
+constants during the fresh-install check; documentation does not fix code.
+
+The dedicated environment is .venv-smartdesk. requirements.txt was frozen
+from it and pip check passed. Clean installation from that file is pending.
+
+Core delivery tasks remaining:
+  1. Confirm configuration/path portability and clean-install reproducibility.
+  2. Review generated answers for factual completeness and unsupported claims.
+  3. Prepare the application source repository with code, tests, reviewed KB,
+     evaluation cases, README, architecture and safe configuration examples.
+  4. Inspect .gitignore and staged files; exclude credentials, environments,
+     generated vector storage and private SQLite associations.
+  5. Package a 3–5 minute video or annotated screenshots covering KB answer,
+     explicit ticket creation and live status/comments.
+
+No additional dataset download is required to reach the current 30-document
+target. Cloud deployment, web UI, semantic reranking, durable conversation
+memory, caching and package refactoring are optional later improvements.
+
+FDE concept mapping:
+  Week 2: metadata, preparation, section chunking, Documents, embeddings,
+          Chroma and prompt pipelines.
+  Week 3: grounding, evidence coverage, decision/citation checks and manual review.
+  Weeks 4–5: graph state, routing, checkpoints, interrupts and follow-ups.
+  Week 6: dense/sparse retrieval and RRF.
+  Week 7: external API read/write tools.
+  Week 8: failure handling, guardrails and workflow versus model evaluation.
+
+These are conceptual connections to the discussed course topics, not a claim
+that every implementation detail is identical to the classroom examples.
+
+DOCUMENTATION CHANGE NOTE
+
+Issue: the supplied architecture still described 16 documents, 109 chunks,
+9 evaluation cases, and LangGraph/ticket integration as future work.
+
+Update: documented the implemented 30-document, 179-chunk RAG and LangGraph
+application, strict citation-ID schema, confirmed GitHub writes, live reads,
+session/mapping persistence, 23-case results and 22 offline tests.
+
+Validation: documentation reviewed against supplied sources and execution
+outputs; no application code changed and no live API tests were run during
+this documentation update. Fresh-install and final capture remain pending.

@@ -1,0 +1,41 @@
+# Purpose: Exclude local credentials, environments, caches, and generated storage.
+.env
+.env.*
+!.env.example
+.venv/
+.venv-smartdesk/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+
+# Rebuilt locally; includes the private email-to-ticket mapping database.
+storage/
+data/processed/
+
+# Original downloads are recreated by inspection/download scripts.
+# Keep reviewed data/kb/ and development evaluation cases under version control.
+data/raw/hr_train.jsonl
+data/raw/it_train.jsonl
+
+# Additional local environments and downloaded archives
+.venv-*/
+*.zip
+
+# Local documentation backups
+README.before_update.md
+architecture.before_update.txt
+
+# Additional local environments and downloaded archives
+.venv-*/
+*.zip
+
+# Local documentation backups
+README.before_update.md
+architecture.before_update.txt
+
+# Local backups
+*.bak

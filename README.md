@@ -2,7 +2,7 @@
 
 A conversational IT and HR helpdesk for fictional **NovaTech Solutions**. SmartDesk answers from a reviewed knowledge base, offers escalation when requested information is missing, creates real GitHub Issues after explicit confirmation, and reads live ticket status and support comments.
 
-The application runs locally through a CLI. LangGraph coordinates conversation state and human input; LangChain supplies the RAG prompt and model interfaces.
+Run SmartDesk locally through the CLI or the Gradio browser interface. Both use the same LangGraph workflow for conversation state and human input. LangChain supplies the RAG prompt and model interfaces.
 
 ## Implementation status
 
@@ -15,7 +15,8 @@ The application runs locally through a CLI. LangGraph coordinates conversation s
 | Hybrid retrieval | Dense and BM25 candidates combined with Reciprocal Rank Fusion (RRF) |
 | Answer generation | Evidence-grounded structured response; request-specific allowed citation IDs |
 | Conversation | Intent routing, follow-up resolution, session email memory and session reset |
-| Ticket creation | Email and draft collection, preview, editing, cancellation and explicit `CREATE` confirmation |
+| Interfaces | CLI and local Gradio UI, with the same retrieval and ticket workflows |
+| Ticket creation | Email and draft collection, preview, editing, cancellation and explicit confirmation in either interface |
 | Ticket status | Local email mapping, live GitHub state/comments and multiple-ticket selection |
 | Error handling | Operational errors distinguished from missing KB evidence; no automatic ticket-write retry |
 
@@ -32,7 +33,9 @@ Results below come from the NUC run shared on November 5, 2026, using `k=4`, 23 
 | Correct answerability decision | 23/23 | 23/23 |
 | Valid citation IDs | 23/23 | 23/23 |
 
-All **22 offline workflow/API/storage tests passed** in the same reported validation sequence. Manual CLI demonstrations also showed KB answers, confirmed GitHub ticket creation, and live status/comments retrieved after restarting the CLI.
+All **22 offline workflow/API/storage tests passed** in the reported validation sequence and again in the fresh clone. Manual CLI demonstrations also showed KB answers, confirmed GitHub ticket creation, and live status/comments retrieved after restarting the CLI.
+
+The main NUC checkout passed a Gradio smoke test: the July sick-leave question returned **4 working days** with two policy citations, and cancelling at the ticket preview created no issue. After pushing the UI, the separate checkout installed it from `requirements.txt`, passed `pip check`, and reproduced the cited July answer through the browser. Live issue creation was demonstrated through the CLI.
 
 Dense missed the designated tax-deadline passage in this run, while still reporting insufficient evidence. Earlier runs showed other intermittent retrieval and decision differences. Their cause has not been established. The latest scores do not establish repeatability, general accuracy, or a statistically meaningful advantage for hybrid retrieval. Hybrid is the selected demonstration mode.
 
@@ -40,12 +43,13 @@ These are development cases used during implementation, not a held-out test set.
 
 ## Requirements and configuration
 
-- Python and a dedicated virtual environment. Use the same Python minor version as the working environment for the first clean-install check; record it with `python --version`.
+- Python 3.12 and a dedicated virtual environment. The NUC verification used Python 3.12.3.
+- `requirements.txt` includes `gradio==6.31.0` for the browser interface.
 - OpenAI API credentials and network access for embeddings, routing and generation.
 - A GitHub repository with Issues enabled and a fine-grained token granting that repository **Issues: read and write** access, plus required read-only metadata access.
 - Current ticket destination: [`mith1979/smartdesk-tickets`](https://github.com/mith1979/smartdesk-tickets).
 
-That repository stores demonstration support issues. It is not evidence that the SmartDesk application source repository has been published.
+The private [application source repository](https://github.com/mith1979/smartdesk-ai) and the ticket repository serve separate purposes: clone the source repository to install SmartDesk; the application writes demonstration issues to the ticket repository.
 
 The current ticket implementation restricts operations to this repository. Changing destinations requires updating `EXPECTED_REPOSITORY` in `scripts/verify_github.py` and `REPOSITORY` in `scripts/ticket_store.py`, as well as configuration.
 
@@ -59,7 +63,7 @@ The current ticket implementation restricts operations to this repository. Chang
 
 Configuration precedence is existing process variables, then project `.env`, then shared `fde_program/.env`, all loaded without overriding earlier values. Blank project values can mask populated shared values. Keep a working installation's configuration intact; never commit real credentials.
 
-**Portability limitation:** the current shared `.env` fallback uses the FDE directory layout. A sufficiently shallow checkout path can fail at import when ancestor paths are calculated. A project `.env` alone cannot fix an import-time path calculation. Review those constants before claiming arbitrary-location clone/install support. Fresh-checkout verification remains pending.
+The index and ticket scripts look for an ancestor named `fde_program` to locate the shared `.env`. A checkout outside that workspace uses its project `.env` without assuming a fixed directory depth. Both configurations were verified on the NUC.
 
 ## Setup
 
@@ -70,7 +74,7 @@ cd ~/projects/python/fde_program/notebooks/week_11/smartdesk_capstone
 source .venv-smartdesk/bin/activate
 ```
 
-For a new installation, after checking the path limitation above:
+For a new installation:
 
 ```bash
 python3 -m venv .venv-smartdesk
@@ -81,13 +85,11 @@ python -m pip check
 
 Create a project `.env` from `.env.example` only if one does not already exist, fill its values locally, and use `chmod 600 .env`. The existing NUC may continue using its working shared configuration. Do not overwrite it with placeholder values.
 
-The user generated `requirements.txt` with `python -m pip freeze` from the dedicated environment and reported no broken requirements. Dependency consistency in that environment is verified; installation from scratch using that file is not yet verified. Check the final file for machine-specific paths before publishing.
-
 ### Verify a fresh clone
 
-Publishing the application source to GitHub and verifying installation are separate steps. After publishing, clone the repository into a separate directory, create a new virtual environment, install `requirements.txt`, and configure credentials locally using `.env.example`. Rebuild the chunks and Chroma index from the committed `data/kb/` files, run the offline workflow tests, and perform a conversational smoke test. Do not copy the working environment, generated index, or private ticket-mapping database into the fresh clone.
+With access to the source repository, clone it into a separate directory outside the `fde_program` workspace. Follow the new-installation steps above, then build the chunks and Chroma index from the committed `data/kb/` files, run the offline workflow tests, and start SmartDesk. Build the index in the new checkout; the virtual environment, generated index and private ticket-mapping database are local to each installation.
 
-A successful push does not establish that the project installs or runs from scratch. This check has not yet been completed; the environment-path limitation above must be addressed as part of it.
+On the NUC, the standalone clone installed successfully, passed all 22 offline tests, rebuilt all 179 index entries, and verified GitHub Issues read access. The pushed Gradio update was then installed and smoke-tested in that same standalone checkout using its rebuilt index. The browser test was read-only.
 
 
 ## Data and provenance
@@ -137,6 +139,28 @@ The expansion drafts have already been promoted on the NUC. Do not rerun `promot
 
 ## Run SmartDesk
 
+### Browser UI on the NUC
+
+From the project root with the virtual environment active and the index built, start the server on the NUC:
+
+```bash
+python scripts/smartdesk_web.py --retrieval hybrid --port 7861
+```
+
+Leave the server running. On your Mac, open a separate terminal and substitute your usual NUC hostname for `YOUR_NUC_HOST` (or use your configured SSH alias):
+
+```bash
+ssh -N -L 7861:127.0.0.1:7861 mithun@YOUR_NUC_HOST
+```
+
+Open [http://localhost:7861](http://localhost:7861) on your Mac. The app listens on the NUC's loopback interface and public sharing is disabled.
+
+If an earlier SmartDesk server is still using port `7861`, stop it with **Ctrl+C** in its NUC terminal before relaunching. If the old SSH tunnel is also still open on the Mac, reuse it or stop it before opening a new one. To keep the earlier instance running, use port `7862` in the launch command, both port positions in the SSH command, and the browser URL.
+
+Use **New chat** to start a new session. At a ticket preview, **Apply edits** updates the draft for review, **Cancel** ends the request without a write, and **Create GitHub issue** submits the reviewed draft.
+
+### CLI
+
 ```bash
 python scripts/smartdesk_chat.py --retrieval hybrid
 ```
@@ -156,35 +180,17 @@ For a single-turn RAG check without ticket orchestration:
 python scripts/rag.py "I joined in July. How much sick leave do I receive that year?" --retrieval hybrid
 ```
 
-`rag.py` does not submit tickets. Use `smartdesk_chat.py` for the integrated workflow. An old standalone message saying ticket creation is not connected is obsolete wording, not a description of the integrated application.
+`rag.py` does not submit tickets. Use `smartdesk_chat.py` or `smartdesk_web.py` for the integrated workflow.
 
 ## Architecture
 
+![SmartDesk system architecture: the Gradio UI and CLI enter LangGraph, which routes requests to knowledge answers, approved GitHub ticket creation, or live ticket lookup.](docs/smartdesk-architecture.png)
+
+The Gradio UI and CLI share one LangGraph workflow. Knowledge questions use Chroma vector search and BM25 to retrieve evidence; ticket creation pauses for approval before writing to GitHub; ticket lookup uses SQLite associations to read live GitHub status and comments.
+
 ### Complete conversation flow
 
-```mermaid
-flowchart TD
-    USER[Employee message] --> ROUTER[LangGraph routes the request]
-    ROUTER -->|Policy or troubleshooting question| RAG[Search KB and generate answer]
-    ROUTER -->|Explicit ticket request| DETAILS[Collect email and ticket details]
-    ROUTER -->|Check tickets| LOOKUP[Look up email in SQLite]
-    ROUTER -->|Chat or clarification| CHAT[Reply or ask for clarification]
-    RAG --> CHECK{Enough evidence?}
-    CHECK -->|Yes| ANSWER[Answer with citations]
-    CHECK -->|No| OFFER[Explain gap and offer ticket]
-    OFFER -->|Accept| DETAILS
-    OFFER -->|Decline| STOP[End without creating ticket]
-    DETAILS --> PREVIEW[Show ticket preview]
-    PREVIEW --> APPROVAL{Employee decision}
-    APPROVAL -->|EDIT| DETAILS
-    APPROVAL -->|Cancel| STOP
-    APPROVAL -->|CREATE| GITHUB[Create GitHub issue]
-    GITHUB --> SAVE[Save email-to-ticket mapping]
-    SAVE --> RESULT[Return issue number and URL]
-    LOOKUP --> LIVE[Fetch live GitHub status and comments]
-    LIVE --> SELECT[Select ticket if multiple]
-    SELECT --> DISPLAY[Display result or lookup error]
-```
+![LangGraph routes employee messages to a policy answer, ticket draft and approval, live ticket lookup, or a direct reply.](docs/smartdesk-conversation-flow.png)
 
 This is the successful-path overview. No associated tickets produces an explicit
 no-match response. Operational failures are reported separately from missing KB
@@ -192,22 +198,7 @@ information. The creation failure boundaries are shown below.
 
 ### Hybrid RAG flow
 
-```mermaid
-flowchart TD
-    QUESTION[Employee question] --> DENSE[Dense semantic search]
-    QUESTION --> BM25[BM25 keyword search]
-    INDEX[Indexed KB passages in Chroma] --> DENSE
-    INDEX --> BM25
-    DENSE -->|Up to 10 candidates| FUSION[Reciprocal Rank Fusion]
-    BM25 -->|Up to 10 candidates| FUSION
-    FUSION --> TOP[Select final 4 passages]
-    TOP --> PROMPT[Question plus evidence and grounding rules]
-    PROMPT --> MODEL[Chat model with strict output schema]
-    MODEL --> VALIDATE[Validate answer and citation IDs]
-    VALIDATE -->|Valid and supported| SUPPORTED[Supported answer with sources]
-    VALIDATE -->|Valid and insufficient| INSUFFICIENT[Missing information and escalation route]
-    VALIDATE -->|Invalid output or operation failed| FAILURE[Report validation or operational failure]
-```
+![Dense and BM25 retrieval feed reciprocal rank fusion; the model receives the top passages, and the workflow validates citation IDs.](docs/smartdesk-hybrid-rag-flow.png)
 
 Candidate counts in this diagram use the evaluation settings: `k=4` and
 `fetch_k=10`. Dense-only mode bypasses BM25 and RRF. Passage embeddings are
@@ -215,22 +206,11 @@ created during indexing; the query embedding is created at search time.
 
 ### Ticket approval and failure boundaries
 
-```mermaid
-flowchart TD
-    A[Collect or reuse email and draft details] --> B[Preview and human interrupt]
-    B -->|EDIT| C[Validate revised draft]
-    C --> B
-    B -->|Cancel| D[End without writing]
-    B -->|CREATE| E[Validate and submit GitHub issue]
-    E -->|Created| F[Save email mapping]
-    F -->|Saved| G[Return actual issue number and URL]
-    E -->|Failed or uncertain| H[Report failure or uncertainty]
-    F -->|Mapping failure| I[Return created issue reference and warning]
-```
+![Draft edits return to the preview, cancellation performs no write, and approved writes return an issue link or an error.](docs/smartdesk-ticket-approval-flow.png)
 
 ### Two kinds of memory
 
-| Memory | Stores | Survives CLI restart? |
+| Memory | Stores | Survives application restart? |
 |---|---|---|
 | LangGraph `InMemorySaver` | Conversation context, supplied email and workflow state | No |
 | SQLite | Employee email-to-GitHub-ticket associations | Yes |
@@ -239,10 +219,7 @@ LangGraph coordinates the conversation. RAG supplies evidence-based answers.
 GitHub owns the tickets and their current state. SQLite remembers the email
 associations, not a cached ticket status.
 
-Mermaid blocks require a Markdown viewer with Mermaid support. In a plain-text
-editor, their diagram source will be visible instead of a rendered picture.
-
-`interrupt()` pauses for human input; the CLI resumes using `Command(resume=...)` and the same thread ID. Issue creation occurs after approval in a separate node. The state machine supports cancellation and editing before a write.
+`interrupt()` pauses for human input; the CLI and browser UI both resume using `Command(resume=...)` and the same thread ID. Issue creation occurs after approval in a separate node. The state machine supports cancellation and editing before a write.
 
 Dense search embeds the question through the Chroma embedding function. BM25 uses the same stored passage texts, simple lowercase tokenization, stable corpus order and deterministic score ties. Hybrid fetches up to `max(10, k)` candidates per method and adds `1 / (60 + rank)` contributions per chunk before returning the final `k` passages. RRF combines ranks, not raw scores. No learned semantic reranker is implemented.
 
@@ -379,11 +356,13 @@ not the live RAG or GitHub calls.
 
 ## Demonstration plan
 
-1. **KB answer:** ask how to reset a password. Inspect the documented steps and citation. Ask the July sick-leave question (4 days) and September follow-up (3 days after rounding up to the nearest half-day).
-2. **Escalation/write:** ask how to replace a flickering monitor. The procedure and eligibility are deliberately undefined. Accept drafting, supply a fictional employee email, inspect/edit the preview and submit with `CREATE`. Show the actual GitHub issue and URL. Demonstrate a separate cancellation with no write.
-3. **Status/read:** ask for ticket updates, selecting among multiple tickets if necessary. Manually add a demonstration support comment on GitHub and ask again. Show the new comment. Restart the CLI, provide the same email, and show that mapping persists while conversational email memory resets.
+For a three-minute browser demo, open the UI through the SSH tunnel and start with **New chat**:
 
-Also demonstrate `/new` with an unmapped email. No local association should be reported clearly; an API error must not be misreported as no tickets. Use fictional data in recordings and debug logs.
+1. **Answer with evidence.** Ask “I joined in July. How much sick leave do I receive that year?” Show **4 working days** and the two policy citations supporting the calculation.
+2. **Pause before a write.** Ask “Create a ticket for my flickering monitor.” If prompted, use a fictional employee email. Show the draft, apply an edit if useful, then click **Cancel**. Point out that the app confirms no issue was created.
+3. **Read live status.** Ask “Show my tickets” using a fictional email with an existing ticket mapping in that checkout. Select a ticket if prompted and show the GitHub status and any support comments. Use the main checkout if the clean checkout has no mapped tickets.
+
+If the reviewer needs to see an actual write, submit a separate, clearly labeled demo draft using **Create GitHub issue** in the browser or `CREATE` in the CLI. Use fictional data and show the returned issue URL. The local demo needs no cloud deployment.
 
 ## FDE concept connection
 
